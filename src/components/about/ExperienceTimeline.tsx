@@ -1,4 +1,3 @@
-import { ArrowRight } from 'lucide-react';
 import { RESUME } from '../../data/resume';
 import { C, useReveal } from './theme';
 
@@ -6,7 +5,7 @@ import { C, useReveal } from './theme';
  * EXPERIENCE：静态履历展示（无任何展开交互）。
  * - 左侧：01 / EXPERIENCE + 时间 / 公司 / 职位，始终完整可见
  * - 右侧：01—05 职责固定列表，编号 + 完整职责原文，无补充说明
- * - 悬停只做三件事：行背景轻微变灰、编号块变荧光黄、右侧箭头轻微右移
+ * - 悬停只做两件事：行背景轻微变灰、编号块变荧光黄
  *
  * 类名里的颜色写成字面量是刻意的：Tailwind 的 hover / group-hover 变体读不到内联 style，
  * 数值对应 theme.ts —— soft #E8E7E1 / accent #DDF344 / ink #171717 / sub #626262。
@@ -19,22 +18,22 @@ export default function ExperienceTimeline() {
     <div ref={ref} className="grid gap-8 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-14">
       {/* 左：履历基本信息（静态，无交互） */}
       <div className="lg:sticky lg:top-28 lg:self-start">
-        <p translate="no" className="text-[10px] font-bold uppercase tracking-[.24em]" style={{ color: C.sub }}>
+        <p translate="no" className="text-[12px] font-bold uppercase tracking-[.24em]" style={{ color: C.sub }}>
           01 / EXPERIENCE
         </p>
         <p
-          className="mt-3 text-sm font-bold leading-[1.6]"
+          className="mt-3 text-base font-bold leading-[1.6]"
           style={{ color: C.ink, fontVariantNumeric: 'tabular-nums' }}
         >
           {period}
         </p>
-        <p className="mt-1.5 text-sm font-bold leading-[1.6]" style={{ color: C.ink }}>
+        <p className="mt-1.5 text-base font-bold leading-[1.6]" style={{ color: C.ink }}>
           {company}
         </p>
-        <p className="mt-3.5 text-sm font-bold leading-[1.6]" style={{ color: C.ink }}>
+        <p className="mt-3.5 text-base font-bold leading-[1.6]" style={{ color: C.ink }}>
           AIGC内容创作者
         </p>
-        <p className="mt-1.5 text-xs leading-[1.7]" style={{ color: C.sub }}>
+        <p className="mt-1.5 text-sm leading-[1.7]" style={{ color: C.sub }}>
           新媒体内容与AI视觉资产制作
         </p>
       </div>
@@ -68,14 +67,6 @@ export default function ExperienceTimeline() {
                 <p className="min-w-0 flex-1 text-[14px] font-bold leading-[1.65] sm:text-[15px]" style={{ color: C.ink }}>
                   {duty}
                 </p>
-
-                <ArrowRight
-                  size={16}
-                  strokeWidth={2.2}
-                  aria-hidden="true"
-                  className="mt-[3px] shrink-0 opacity-40 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100"
-                  style={{ color: C.sub }}
-                />
               </div>
             </div>
           );
