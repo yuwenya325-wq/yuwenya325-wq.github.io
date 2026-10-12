@@ -316,29 +316,6 @@ export default function IpDetailPage({ project, onHome, onBack }: IpDetailPagePr
             </div>
           </section>
         ) : null}
-
-        {/* ── 底部：返回 + 上 / 下一个 IP 项目 ─────────────────────── */}
-        <div className="mt-16 flex flex-col gap-6 border-t pt-8 sm:mt-20 sm:pt-10" style={{ borderColor: C.line }}>
-          <a
-            href="/visual/ip-vi"
-            onClick={(event) => { event.preventDefault(); onBack(); }}
-            className="group inline-flex w-fit items-center gap-3 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-[.16em] no-underline outline-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:text-sm"
-            style={{ backgroundColor: C.ink, color: '#FFFFFF', outlineColor: C.ink }}
-          >
-            <ArrowLeft size={16} strokeWidth={2.8} aria-hidden="true" />
-            BACK
-          </a>
-
-          <a
-            href="/#visual-design"
-            onClick={(event) => { event.preventDefault(); onHome(); }}
-            className="inline-flex w-fit items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.18em] no-underline outline-none transition-colors duration-300 hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-            style={{ color: C.sub, outlineColor: C.ink }}
-          >
-            <ArrowUpRight size={13} strokeWidth={2.6} aria-hidden="true" />
-            BACK
-          </a>
-        </div>
       </main>
 
       {preview !== null ? (

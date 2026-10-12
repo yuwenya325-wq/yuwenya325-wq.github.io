@@ -351,18 +351,8 @@ export default function VisualWorkPage({ category, onHome, onBack, onOpenCategor
           ) : renderWorks()}
         </div>
 
-        {/* ── 底部：返回 + 相邻分类 ──────────────────────────────── */}
+        {/* ── 底部：相邻分类（返回统一放右上角） ─────────────────── */}
         <div className="mt-16 flex flex-col gap-6 border-t pt-8 sm:mt-20 sm:pt-10" style={{ borderColor: C.line }}>
-          <a
-            href="/#visual-design"
-            onClick={(event) => { event.preventDefault(); onBack(); }}
-            className="group inline-flex w-fit items-center gap-3 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-[.16em] no-underline outline-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:text-sm"
-            style={{ backgroundColor: C.ink, color: '#FFFFFF', outlineColor: C.ink }}
-          >
-            <ArrowLeft size={16} strokeWidth={2.8} aria-hidden="true" />
-            BACK
-          </a>
-
           <div className="grid gap-px sm:grid-cols-2" style={{ backgroundColor: C.line, border: `1px solid ${C.line}` }}>
             {[siblings.previous, siblings.next].map((item, index) => (
               <a

@@ -226,18 +226,8 @@ export default function PosterWorkDetailPage({ work, onHome, onBack, onOpenWork 
           </section>
         ) : null}
 
-        {/* ── 底部：返回 + 上 / 下一个作品 ──────────────────────────── */}
+        {/* ── 底部：上 / 下一个作品（返回统一放右上角） ────────────────── */}
         <div className="mt-16 flex flex-col gap-6 border-t pt-8 sm:mt-20 sm:pt-10" style={{ borderColor: C.line }}>
-          <a
-            href="/visual/poster"
-            onClick={(event) => { event.preventDefault(); onBack(); }}
-            className="group inline-flex w-fit items-center gap-3 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-[.16em] no-underline outline-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:text-sm"
-            style={{ backgroundColor: C.ink, color: '#FFFFFF', outlineColor: C.ink }}
-          >
-            <ArrowLeft size={16} strokeWidth={2.8} aria-hidden="true" />
-            BACK
-          </a>
-
           <div className="grid gap-px sm:grid-cols-2" style={{ backgroundColor: C.line, border: `1px solid ${C.line}` }}>
             {[
               { item: previous, label: 'PREVIOUS', icon: ArrowLeft },
@@ -265,16 +255,6 @@ export default function PosterWorkDetailPage({ work, onHome, onBack, onOpenWork 
               </a>
             ))}
           </div>
-
-          <a
-            href="/#visual-design"
-            onClick={(event) => { event.preventDefault(); onHome(); }}
-            className="inline-flex w-fit items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.18em] no-underline outline-none transition-colors duration-300 hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-            style={{ color: C.sub, outlineColor: C.ink }}
-          >
-            <ArrowUpRight size={13} strokeWidth={2.6} aria-hidden="true" />
-            BACK
-          </a>
         </div>
       </main>
 
