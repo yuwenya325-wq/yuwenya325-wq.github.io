@@ -1,2 +1,7 @@
+# pnpm 工作区配置。本项目是单包仓库，packages 只声明根目录本身。
+# 注意：缺省 packages 字段会让 pnpm 9 直接报错「packages field missing or empty」。
+packages:
+  - '.'
+
 allowBuilds:
   esbuild: true

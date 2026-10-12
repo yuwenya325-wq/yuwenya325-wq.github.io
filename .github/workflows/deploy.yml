@@ -26,15 +26,18 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
+
+      # pnpm 10 默认拦截依赖的安装脚本，esbuild 二进制必须显式重建，否则 vite 构建会失败
+      - name: Rebuild esbuild
+        run: pnpm rebuild esbuild
 
       - name: Build
         run: pnpm run build
