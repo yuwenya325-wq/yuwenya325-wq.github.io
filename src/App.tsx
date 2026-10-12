@@ -91,12 +91,6 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    // 预热四张封面图（缩略图由浏览器 srcset 自动按需取）
-    IMAGES.forEach(({ cover }) => {
-      const image = new Image();
-      image.src = cover;
-    });
-
     const updateViewport = () => setIsMobile(window.innerWidth < 640);
     window.addEventListener('resize', updateViewport);
     return () => window.removeEventListener('resize', updateViewport);
@@ -664,10 +658,12 @@ export default function App() {
                 )}
                 <div className="figurine-lift" style={liftStyle(role)}>
                   <WorkImage
-                    sources={[
-                      { src: image.thumb, width: 600 },
-                      { src: image.cover, width: image.width },
-                    ]}
+                    sources={isCenter
+                      ? [
+                          { src: image.thumb, width: 600 },
+                          { src: image.cover, width: image.width },
+                        ]
+                      : [{ src: image.thumb, width: 600 }]}
                     alt={isCenter ? image.alt : ''}
                     width={image.width}
                     height={image.height}

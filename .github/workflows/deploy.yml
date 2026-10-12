@@ -1,0 +1,61 @@
+name: Deploy to GitHub Pages
+
+# 推送到 main 即自动构建并以「根路径」发布到 GitHub Pages。
+# 站点资源全部是根路径绝对地址（/works/... 、/characters/...），
+# 因此必须发布在 <user>.github.io 根域名上，不能放到 /repo-name/ 子路径。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只保留一次发布，取消排队中的旧任务
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      # SPA 深链兜底：GitHub Pages 无服务端 rewrite，
+      # 用 404.html 承载同一份 HTML，刷新 /visual/poster 之类的路径才不会断。
+      - name: Add SPA fallback (404.html)
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
