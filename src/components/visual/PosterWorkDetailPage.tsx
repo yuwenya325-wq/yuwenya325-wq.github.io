@@ -68,8 +68,7 @@ export default function PosterWorkDetailPage({ work, onHome, onBack, onOpenWork 
             style={{ border: `1px solid ${C.ink}`, color: C.ink, outlineColor: C.ink }}
           >
             <ArrowLeft size={14} strokeWidth={2.8} aria-hidden="true" />
-            <span className="hidden sm:inline">BACK TO POSTER DESIGN</span>
-            <span className="sm:hidden">BACK</span>
+            BACK
           </a>
         </div>
       </header>
@@ -236,7 +235,7 @@ export default function PosterWorkDetailPage({ work, onHome, onBack, onOpenWork 
             style={{ backgroundColor: C.ink, color: '#FFFFFF', outlineColor: C.ink }}
           >
             <ArrowLeft size={16} strokeWidth={2.8} aria-hidden="true" />
-            BACK TO POSTER DESIGN
+            BACK
           </a>
 
           <div className="grid gap-px sm:grid-cols-2" style={{ backgroundColor: C.line, border: `1px solid ${C.line}` }}>
@@ -274,7 +273,7 @@ export default function PosterWorkDetailPage({ work, onHome, onBack, onOpenWork 
             style={{ color: C.sub, outlineColor: C.ink }}
           >
             <ArrowUpRight size={13} strokeWidth={2.6} aria-hidden="true" />
-            BACK TO VISUAL DESIGN
+            BACK
           </a>
         </div>
       </main>

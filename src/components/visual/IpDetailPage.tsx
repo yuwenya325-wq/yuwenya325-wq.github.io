@@ -126,8 +126,7 @@ export default function IpDetailPage({ project, onHome, onBack }: IpDetailPagePr
             style={{ border: `1px solid ${C.ink}`, color: C.ink, outlineColor: C.ink }}
           >
             <ArrowLeft size={14} strokeWidth={2.8} aria-hidden="true" />
-            <span className="hidden sm:inline">BACK TO IP DESIGN &amp; VI</span>
-            <span className="sm:hidden">BACK</span>
+            BACK
           </a>
         </div>
       </header>
@@ -327,7 +326,7 @@ export default function IpDetailPage({ project, onHome, onBack }: IpDetailPagePr
             style={{ backgroundColor: C.ink, color: '#FFFFFF', outlineColor: C.ink }}
           >
             <ArrowLeft size={16} strokeWidth={2.8} aria-hidden="true" />
-            BACK TO IP DESIGN &amp; VI
+            BACK
           </a>
 
           <a
@@ -337,7 +336,7 @@ export default function IpDetailPage({ project, onHome, onBack }: IpDetailPagePr
             style={{ color: C.sub, outlineColor: C.ink }}
           >
             <ArrowUpRight size={13} strokeWidth={2.6} aria-hidden="true" />
-            BACK TO VISUAL DESIGN
+            BACK
           </a>
         </div>
       </main>

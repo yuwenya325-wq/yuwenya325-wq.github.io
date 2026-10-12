@@ -155,7 +155,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
-  /** 回到首页并定位到某个栏目（作品页的「BACK TO VISUAL DESIGN」走这里） */
+  /** 回到首页并定位到某个栏目（作品页的「BACK」按钮走这里） */
   const goToSection = useCallback((sectionId: string) => {
     if (normalizePath(window.location.pathname) !== '/') {
       window.history.pushState({ section: sectionId }, '', `/#${sectionId}`);

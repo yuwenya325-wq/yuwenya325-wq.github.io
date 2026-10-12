@@ -109,7 +109,7 @@ export default function FilmDetailPage({ project, onBack, onHome }: FilmDetailPa
             onMouseLeave={(event) => { event.currentTarget.style.backgroundColor = '#FFFFFF'; event.currentTarget.style.borderColor = FILM.border; event.currentTarget.style.color = FILM.body; }}
           >
             <ArrowLeft size={13} strokeWidth={2.8} className="transition-transform duration-300 group-hover:-translate-x-1" aria-hidden="true" />
-            BACK TO AI FILM
+            BACK
           </button>
         </div>
       </header>
