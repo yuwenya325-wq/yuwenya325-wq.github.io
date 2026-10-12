@@ -1,0 +1,815 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+  background: #f4845f;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { width: 100%; min-height: 100%; margin: 0; }
+/* 全站改为单页滚动式结构：纵向滚动交给浏览器，横向不出现滚动条。
+   栏目跳转由 JS 的 scrollIntoView({ behavior: 'smooth' }) 完成，
+   并在「减少动态效果」偏好下自动切换为瞬时跳转。 */
+body { min-width: 320px; overflow-x: hidden; }
+button, a { -webkit-tap-highlight-color: transparent; }
+
+/* ── 3D 玩偶舞台 ──────────────────────────────────────────────────
+   把原来的平面轮播升级为真 3D 透视场景（零依赖，纯 CSS 3D + 浏览器透视投影）：
+   - .figurine-stage 建立透视；.figurine-3d 用 preserve-3d 承载整组角色，
+     它自身的 rotateX / rotateY 由 JS 写入的 --rx / --ry 驱动；
+   - 每个角色按层级有不同 translateZ，舞台旋转时产生真实的前后错位（而非位移伪装）；
+   - --mx / --my 是归一化后的指针位置，用于背景层的反向位移，进一步拉开纵深；
+   - 悬停单个角色时沿 Z 轴朝观众推出。
+   触摸设备只保留拖拽；「减少动态效果」偏好下整体降级回原来的平面表现。 */
+.figurine-stage {
+  --mx: 0;
+  --my: 0;
+  --rx: 0;
+  --ry: 0;
+  perspective: 1800px;
+  user-select: none;
+  /* 允许纵向滑动翻页（触摸设备上下滑动时由浏览器接管滚动，指针事件会收到 pointercancel） */
+  touch-action: pan-y;
+}
+
+.figurine-stage:not(.is-dragging) { cursor: grab; }
+.figurine-stage.is-dragging { cursor: grabbing; }
+.figurine-stage button,
+.figurine-stage a { cursor: pointer; }
+.figurine-stage button:disabled { cursor: wait; }
+
+.figurine-3d {
+  transform-style: preserve-3d;
+  transform-origin: 50% 58%;
+  transform: rotateX(calc(var(--rx) * 1deg)) rotateY(calc(var(--ry) * 1deg));
+  will-change: transform;
+}
+
+/* 外层定位元素保持三维层级，variance 交给内层；filter / opacity 已下移到 .figurine-lift */
+.figurine-item { transform-style: preserve-3d; }
+
+/* 背景层：四屏渐变叠放，靠 opacity 交叉淡入淡出（渐变无法用 background-color 过渡） */
+.figurine-bg { background-repeat: no-repeat; background-size: cover; will-change: opacity; }
+
+.figurine-lift {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  width: 100%;
+  transform: translateZ(0px);
+  will-change: transform;
+}
+
+.figurine-item:hover .figurine-lift { transform: translateZ(80px); }
+
+.figurine-image { transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1); }
+.figurine-item:hover .figurine-image { transform: scale(1.03); }
+
+/* ── 角色材质：像被打过灯的 3D 潮玩，而不是贴图 ───────────────────
+   drop-shadow 沿 PNG 的 alpha 剪影外扩，等价于给角色打轮廓光：
+   左侧来自辅光的冷白高光、右侧来自该屏轮廓色的暖光边，
+   再叠一层极轻的对比/饱和提升，得到塑料与玻璃质感的高光层次。
+   全部是静态滤镜（不参与动画），只光栅化一次，不影响滚动与切换性能。 */
+.figurine-item[data-role='center'] .figurine-image {
+  filter:
+    saturate(1.05) contrast(1.035) brightness(1.015)
+    drop-shadow(-7px 3px 16px rgba(255, 255, 255, .26))
+    drop-shadow(6px -2px 14px var(--rim, rgba(255, 255, 255, .45)));
+}
+
+/* 小角色只给一点轮廓提亮，保持远景的轻与虚，不与主角色争高光层次 */
+.figurine-item[data-role='left'] .figurine-image,
+.figurine-item[data-role='right'] .figurine-image {
+  filter: brightness(1.03) drop-shadow(0 0 12px var(--rim, rgba(255, 255, 255, .35)));
+}
+
+/* ── 地面：接触阴影 + 克制的地面倒影 ──────────────────────────────
+   角色图的脚底正好落在图片底边上，因此：
+   - 接触阴影压在同一底边上，宽而软，让角色「踩得住」地面；
+   - 倒影以自身底边为轴做 scaleY(-1) 翻转，自然垂到角色下方，
+     再用 mask 在很短的距离内淡出，只保留脚下一小段浅反射；
+   - 主角色的倒影最实，左右/后排小角色只保留接触阴影，不抢视觉中心。 */
+.figurine-contact {
+  position: absolute;
+  left: 50%;
+  bottom: -1.5%;
+  z-index: 1;
+  width: 62%;
+  height: 6.5%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(28,16,12,.34) 0%, rgba(28,16,12,.15) 46%, rgba(28,16,12,0) 74%);
+  filter: blur(7px);
+  transition: opacity 650ms cubic-bezier(0.4, 0, 0.2, 1), width 650ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.figurine-contact[data-role='left'],
+.figurine-contact[data-role='right'] { width: 54%; opacity: .55; filter: blur(6px); }
+.figurine-contact[data-role='back'] { width: 46%; opacity: .4; filter: blur(6px); }
+
+.figurine-reflect {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transform: scaleY(-1);
+  transform-origin: bottom center;
+  filter: blur(4px);
+  opacity: .8;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,.26) 0%, rgba(0,0,0,.08) 6%, rgba(0,0,0,0) 11%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,.26) 0%, rgba(0,0,0,.08) 6%, rgba(0,0,0,0) 11%);
+}
+
+/* 背景超大 AIGC 字体做反向微位移，并沿 Z 轴推远：
+   既在透视里真正退到角色之后（后景层），又自然缩小约 9%，给主角留出空间 */
+.figurine-backdrop {
+  will-change: transform;
+  transform: translate3d(calc(var(--mx) * -18px), calc(var(--my) * -12px), -190px);
+}
+
+/* 切换时大字的一次「落定」：轻微上移 + 放大回落，观感平滑不瞬切 */
+@keyframes backdropSettle {
+  from { transform: translateY(10px) scale(1.035); opacity: .55; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.figurine-backdrop-text {
+  display: block;
+  /* 轻微景深：它已被 translateZ 推到角色之后，再叠一点柔焦，与前景角色拉开虚实差 */
+  filter: blur(1px);
+  animation: backdropSettle 800ms cubic-bezier(.4, 0, .2, 1) both;
+}
+
+/* ── 主角色动态：鼠标视差（5–15px）+ 3.2s 轻微上下漂浮 ────────────
+   视差写在 .figurine-item 上（用独立的 translate 属性，不与定位用的 transform 冲突），
+   接触阴影与倒影同在 item 内，会随角色一起移动，不会脱节；
+   漂浮写在 .figurine-lift 上，同样走 translate，避免覆盖 hover 的 translateZ。 */
+.figurine-item[data-role='center'] {
+  translate: calc(var(--mx) * 13px) calc(var(--my) * 9px);
+}
+
+@keyframes figurineFloat {
+  0%, 100% { translate: 0 -6px; }
+  50% { translate: 0 6px; }
+}
+.figurine-item[data-role='center'] .figurine-lift {
+  animation: figurineFloat 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .figurine-3d,
+  .figurine-lift { transform: none; }
+  /* 保留大字的 Z 轴退后（这是构图的一部分），仅去掉鼠标视差位移 */
+  .figurine-backdrop { transform: translateZ(-190px); }
+  .figurine-bg { transition: none; }
+  .figurine-reflect { display: none; }
+  .figurine-backdrop-text { animation: none; }
+  .figurine-item[data-role='center'] { translate: none; }
+  .figurine-item[data-role='center'] .figurine-lift { animation: none; }
+}
+
+/* ── 栏目卡片：指针跟随的 3D 倾斜 + 青色描边 + 光斑 ────────────────────
+   倾斜角度由 JS 写入 --tilt-x / --tilt-y（范围约 ±10deg），光斑位置写入
+   --spot-x / --spot-y；全部走 CSS 变量，每帧只写 DOM，不触发重渲染。 */
+.tilt-card {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --spot-x: 50%;
+  --spot-y: 50%;
+  transform: perspective(1100px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 320ms ease,
+    box-shadow 320ms ease,
+    background-color 320ms ease;
+  will-change: transform;
+}
+
+.tilt-card:hover {
+  border-color: rgba(47, 227, 198, 0.55) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(47, 227, 198, 0.12);
+  background-color: rgba(0, 0, 0, 0.24) !important;
+}
+
+/* 指针处的柔光斑 */
+.card-spot {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 320ms ease;
+  background: radial-gradient(
+    240px circle at var(--spot-x) var(--spot-y),
+    rgba(47, 227, 198, 0.16),
+    transparent 65%
+  );
+}
+
+.tilt-card:hover .card-spot { opacity: 1; }
+
+/* 移动端导航面板：逐条错峰滑入 */
+.mobile-nav-panel:not([hidden]) .nav-panel-item {
+  animation: nav-item-in 320ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes nav-item-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card { transform: none; }
+  .card-spot { display: none; }
+  .mobile-nav-panel:not([hidden]) .nav-panel-item { animation: none; }
+}
+
+/* ── ABOUT 创作者档案区（Minimal B&W × Neon Yellow）──────────────────
+   .about-visual 的 --px / --py 由 JS 指针事件写入（范围 -1~1）：
+   荧光黄几何图形与装饰文字据此做轻微视差，人物照片保持稳定。 */
+.about-visual {
+  --px: 0;
+  --py: 0;
+}
+
+/* 荧光黄大圆：随鼠标轻微视差，悬停轻微放大 */
+.about-visual-circle {
+  transition: transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transform: translate3d(calc(var(--px) * 14px), calc(var(--py) * 12px), 0);
+  will-change: transform;
+}
+
+.about-visual:hover .about-visual-circle {
+  transform: translate3d(calc(var(--px) * 14px), calc(var(--py) * 12px), 0) scale(1.05);
+}
+
+/* 半透明方块：反向轻微视差 */
+.about-visual-square {
+  transform: rotate(-6deg) translate3d(calc(var(--px) * -9px), calc(var(--py) * -7px), 0);
+  transition: transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* 细描边方块：正向视差 + 微旋转 */
+.about-visual-frame {
+  transform: rotate(10deg) translate3d(calc(var(--px) * 10px), calc(var(--py) * 8px), 0);
+  transition: transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.about-visual-deco {
+  transform: translate3d(calc(var(--px) * -10px), calc(var(--py) * -7px), 0);
+  transition: transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* 人物整体缓慢浮动 */
+.about-float {
+  animation: about-float 7s ease-in-out infinite;
+}
+
+@keyframes about-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* 能力标签：白底黑字，hover 变荧光黄（色值与 about/theme.ts 的 C 对齐） */
+.about-chip {
+  background-color: #ffffff;
+  color: #171717;
+  border: 1px solid #d6d5cf;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.about-chip:hover {
+  background-color: #ddf344;
+  border-color: #171717;
+  transform: translateY(-2px);
+}
+
+/* 联系小模块：hover 顶部细线转荧光黄 */
+.about-contact {
+  border-top: 1px solid #d6d5cf;
+  transition: border-color 0.3s ease;
+}
+
+.about-contact:hover {
+  border-top-color: #171717;
+}
+
+.about-marquee {
+  animation: about-marquee 34s linear infinite;
+}
+
+@keyframes about-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-marquee { animation: none; }
+  .about-float { animation: none; }
+  .about-chip:hover { transform: none; }
+  .about-visual-circle,
+  .about-visual:hover .about-visual-circle {
+    transform: translate3d(calc(var(--px) * 14px), calc(var(--py) * 12px), 0);
+  }
+  .about-visual-square { transform: rotate(-6deg); }
+  .about-visual-frame { transform: rotate(10deg); }
+  .about-visual-deco { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ══ VISUAL DESIGN：四个分类图标（正式静态 3D 渲染素材 + 悬浮摆转）════════
+   - 素材：/icons/icon-<id>.webp（原图归档 assets/originals/icons/）；
+     组件保持素材原始比例，不做整图 360° 翻转、不做环形公转；
+   - 交互：上下轻微悬浮 + 小角度摆转（CSS transform 动画，四图标周期略异），
+     悬停轻微放大、浮现中英文名与进入提示、底层透出分类柔和强调色；
+   - 配色：奶油白 #F4F3EF + 近黑 #171717 + 每分类一个柔和强调色
+     （--cat-accent / --cat-accent-soft 由组件按数据注入）。 */
+
+.vd-section {
+  background-color: #f4f3ef;
+  color: #171717;
+}
+
+.vd-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 900px) {
+  .vd-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+/* ── 单个图标入口（整体就是一个链接，图标主体不被容器裁切） */
+.vd-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.9em 0.6em 1em;
+  border-radius: 20px;
+  color: inherit;
+  font-size: 16px;
+  text-decoration: none;
+  outline: none;
+  cursor: pointer;
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 899px) {
+  .vd-item { font-size: 12px; }
+}
+
+.vd-item:focus-visible {
+  outline: 2px solid var(--cat-accent, #171717);
+  outline-offset: 4px;
+}
+
+/* 点击后约 300ms 的轻微放大过渡 */
+.vd-item.is-armed { transform: scale(1.045); }
+
+/* ── 图标舞台：halo 在底层透出，图标本体悬浮其上 */
+.vd-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15em;
+  height: 15em;
+  transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.vd-item:hover .vd-stage,
+.vd-item:focus-visible .vd-stage { transform: scale(1.06); }
+.vd-item.is-armed .vd-stage { transform: scale(1.1); }
+
+/* 悬停时底层透出的分类柔和强调色 */
+.vd-halo {
+  position: absolute;
+  inset: 5%;
+  z-index: 0;
+  border-radius: 34%;
+  pointer-events: none;
+  background-color: var(--cat-accent-soft, rgba(23, 23, 23, 0.06));
+  opacity: 0;
+  transform: scale(0.7) rotate(-9deg);
+  transition:
+    opacity 0.4s ease,
+    transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.vd-item:hover .vd-halo,
+.vd-item:focus-visible .vd-halo {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.vd-item.is-armed .vd-halo {
+  opacity: 1;
+  transform: scale(1.05) rotate(0deg);
+}
+
+/* 悬浮 + 摆转：图标本体（只用 transform，不引起布局重排） */
+.vd-float {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: vd-float var(--float-duration, 7s) ease-in-out infinite;
+  will-change: transform;
+}
+
+.vd-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  filter: drop-shadow(0 1.1em 1.5em rgba(23, 23, 23, 0.13));
+}
+
+@keyframes vd-float {
+  0%, 100% { transform: translateY(0) rotate(-2.2deg); }
+  50% { transform: translateY(-0.55em) rotate(2.2deg); }
+}
+
+/* ── VISUAL DESIGN 大标题：实心 + 镂空混排、四色流光句号、悬停字距波浪 ───── */
+.vd-word { display: inline-flex; }
+
+.vd-l {
+  display: inline-block;
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+/* DESIGN 整词镂空：黑描边 + 透明填充，海报感 */
+.vd-word.is-outline .vd-l {
+  color: transparent;
+  -webkit-text-stroke: 0.024em #171717;
+}
+
+/* 中文标题：笔画更密，描边收细、句号略收字距 */
+.vd-title-cn .vd-word.is-outline .vd-l { -webkit-text-stroke-width: 0.014em; }
+
+.vd-title-cn .vd-dot {
+  margin-left: -0.06em;
+  font-size: 0.94em;
+}
+
+/* 悬停：字母按序波浪跳起（离场时无延迟整体回落） */
+.vd-title:hover .vd-l {
+  transform: translateY(-0.07em) rotate(-2deg);
+  transition-delay: calc(var(--i, 0) * 24ms);
+}
+
+/* 中文标题的波浪幅度收敛（放在通用规则之后覆盖） */
+.vd-title-cn:hover .vd-l {
+  transform: translateY(-0.05em) rotate(-1.2deg);
+}
+
+/* 句号：四分类色硬切段循环流动 */
+.vd-dot {
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: vd-dot-flow 5s linear infinite;
+}
+
+@keyframes vd-dot-flow {
+  0% { background-position: 0% 0; }
+  100% { background-position: 300% 0; }
+}
+
+/* ── AI FILM：切换影片时内容整体淡入 + 上移（key 变化触发重播） ─────────── */
+.af-swap { animation: af-swap-in 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+
+@keyframes af-swap-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 制作资产卡片：随切换依次浮现（间隔由组件内联 animationDelay 控制） */
+.af-rise { animation: af-rise-in 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+
+@keyframes af-rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .af-swap,
+  .af-rise { animation: none; }
+}
+
+/* ── 图标文字：编号装饰线 + Anton 流光英文名 + 菱形点缀中文名 + 胶囊 ENTER ── */
+.vd-meta {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 3.4em;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.22em;
+  text-align: center;
+}
+
+/* 编号：两侧渐隐装饰线 */
+.vd-num {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: 0.62em;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em; /* 抵消末位字距，保持视觉居中 */
+  color: var(--cat-accent, #171717);
+  font-family: Inter, sans-serif;
+}
+
+.vd-num::before,
+.vd-num::after {
+  content: '';
+  height: 1px;
+  width: 1.7em;
+  flex: none;
+  background: linear-gradient(90deg, transparent, var(--cat-accent-line, #17171766));
+}
+
+.vd-num::after { background: linear-gradient(90deg, var(--cat-accent-line, #17171766), transparent); }
+
+.vd-names { display: flex; flex-direction: column; align-items: center; gap: 0.2em; }
+
+/* 英文名：Anton + 悬停流光（强调色光带从左到右扫过文字） */
+.vd-en {
+  font-family: Anton, sans-serif;
+  font-size: 0.86em;
+  font-weight: 400;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #171717;
+  background-image: linear-gradient(
+    100deg,
+    #171717 0%, #171717 38%,
+    var(--cat-accent, #f48472) 50%,
+    #171717 62%, #171717 100%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background-position 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.vd-item:hover .vd-en,
+.vd-item:focus-visible .vd-en,
+.vd-item.is-armed .vd-en { background-position: 0% 0; }
+
+/* 中文名：两侧强调色菱形点缀 */
+.vd-cn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  font-size: 0.78em;
+  font-weight: 700;
+  color: rgba(23, 23, 23, 0.55);
+}
+
+.vd-cn::before,
+.vd-cn::after {
+  content: '';
+  width: 0.32em;
+  height: 0.32em;
+  background: var(--cat-accent, #171717);
+  opacity: 0.55;
+  transform: rotate(45deg);
+}
+
+/* ENTER：胶囊按钮，悬停时强调色从左向右填充，箭头同步滑出 */
+.vd-go {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  margin-top: 0.2em;
+  padding: 0.5em 0.95em 0.5em 1.2em;
+  font-size: 0.6em;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  color: var(--cat-accent, #171717);
+  border: 1px solid var(--cat-accent-line, #17171733);
+  border-radius: 3em;
+  overflow: hidden;
+  isolation: isolate;
+  transition: color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.vd-go::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--cat-accent, #171717);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.vd-arrow { display: inline-flex; transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1); }
+
+.vd-item:hover .vd-go,
+.vd-item:focus-visible .vd-go,
+.vd-item.is-armed .vd-go {
+  color: #ffffff;
+  border-color: var(--cat-accent, #171717);
+  transform: translateY(-1px);
+}
+
+.vd-item:hover .vd-go::before,
+.vd-item:focus-visible .vd-go::before,
+.vd-item.is-armed .vd-go::before { transform: scaleX(1); }
+
+.vd-item:hover .vd-arrow,
+.vd-item:focus-visible .vd-arrow,
+.vd-item.is-armed .vd-arrow { transform: translateX(3px); }
+
+@media (min-width: 900px) {
+  .vd-names,
+  .vd-go {
+    opacity: 0;
+    transform: translateY(0.5em);
+    transition:
+      opacity 0.35s ease,
+      transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .vd-item:hover .vd-names,
+  .vd-item:focus-visible .vd-names,
+  .vd-item.is-armed .vd-names,
+  .vd-item:hover .vd-go,
+  .vd-item:focus-visible .vd-go,
+  .vd-item.is-armed .vd-go {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 作品页里的静态图标：常显名称、不可交互、不做悬浮动画 ───────────────── */
+.vd-item.is-static {
+  pointer-events: none;
+  width: 14em;
+  cursor: default;
+}
+
+.vd-item.is-static .vd-stage { transform: none; }
+.vd-item.is-static .vd-float { animation: none; }
+.vd-item.is-static .vd-halo { opacity: 1; transform: scale(1) rotate(-4deg); }
+.vd-item.is-static .vd-go { display: none; }
+.vd-item.is-static .vd-num { color: var(--cat-accent, #626262); }
+.vd-item.is-static .vd-en { color: #171717; }
+.vd-item.is-static .vd-cn { color: #626262; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vd-float { animation: none; }
+  .vd-item.is-armed { transform: none; }
+  .vd-item:hover .vd-stage,
+  .vd-item:focus-visible .vd-stage,
+  .vd-item.is-armed .vd-stage { transform: none; }
+}
+
+/* ── 图片放大预览的进场动画 ─────────────────────────────────────────────── */
+.vw-fade-in { animation: vw-fade-in 220ms ease both; }
+.vw-zoom-in { animation: vw-zoom-in 280ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+
+@keyframes vw-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes vw-zoom-in {
+  from { opacity: 0; transform: scale(0.965); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── VISUAL 作品卡片：进入视口时轻微淡入上移 ──────────────────────────── */
+.vw-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 620ms ease, transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.vw-reveal.is-inview {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vw-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ── APP PRODUCT：3D 手机（透视 / 倾斜 / 悬浮 / 地面柔影） ───────────────── */
+.ap-stage { perspective: 1600px; }
+
+.ap-tilt {
+  transform: rotateY(-14deg) rotateX(5deg);
+  transform-style: preserve-3d;
+  transition: transform 0.75s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.ap-stage:hover .ap-tilt { transform: rotateY(-6deg) rotateX(2deg); }
+
+.ap-float { animation: ap-float 7s ease-in-out infinite; }
+
+@keyframes ap-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-13px); }
+}
+
+/* 地面椭圆柔影：与机身反向呼吸，制造离地高度 */
+.ap-ground {
+  border-radius: 9999px;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(17, 17, 17, 0.20) 0%, rgba(17, 17, 17, 0) 72%);
+  filter: blur(3px);
+  animation: ap-ground 7s ease-in-out infinite;
+}
+
+@keyframes ap-ground {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.9; }
+  50% { transform: translateX(-50%) scale(0.9); opacity: 0.62; }
+}
+
+/* 屏幕交叉淡入 */
+.ap-screen { transition: opacity 0.45s cubic-bezier(0.22, 0.61, 0.36, 1); }
+
+/* 按钮：hover 轻微放大 */
+.ap-press {
+  transition:
+    transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    background-color 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease,
+    box-shadow 300ms ease;
+}
+.ap-press:hover { transform: scale(1.035); }
+.ap-press:active { transform: scale(0.985); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-tilt,
+  .ap-stage:hover .ap-tilt { transform: none; }
+  .ap-float,
+  .ap-ground { animation: none; }
+  .ap-press:hover,
+  .ap-press:active { transform: none; }
+  .ap-screen { transition: none; }
+}
+
+/* ── CONTACT：白卡轻微上浮 + 阴影增强（克制） ─────────────────────────── */
+.ct-card {
+  transition:
+    transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.ct-card:hover,
+.ct-card:focus-visible {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.1);
+  border-color: #d8d8d8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-card:hover,
+  .ct-card:focus-visible {
+    transform: none;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+}
