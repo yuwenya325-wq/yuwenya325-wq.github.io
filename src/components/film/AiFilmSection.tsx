@@ -173,7 +173,7 @@ export default function AiFilmSection({ onOpenProject }: AiFilmSectionProps) {
           <div
             role="tablist"
             aria-label="影视分类"
-            className="-mx-4 mt-8 flex items-center gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:mt-10 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0"
+            className="-mx-4 mt-8 flex snap-x snap-mandatory items-center gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:mt-10 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 sm:pb-1"
             style={reveal(170, 18)}
           >
             {AI_FILM_CATEGORIES.map((item) => {
@@ -187,7 +187,7 @@ export default function AiFilmSection({ onOpenProject }: AiFilmSectionProps) {
                   aria-selected={selected}
                   aria-controls="af-panel"
                   onClick={() => selectCategory(item.id)}
-                  className="group inline-flex h-12 shrink-0 items-center gap-2.5 rounded-[24px] px-6 text-sm font-bold transition-[background-color,border-color,color,box-shadow,transform] duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                  className="group inline-flex h-12 shrink-0 snap-start items-center gap-2.5 rounded-[24px] px-5 text-sm font-bold transition-[background-color,border-color,color,box-shadow,transform] duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-6"
                   style={{
                     backgroundColor: selected ? FILM.accent : 'transparent',
                     border: `1px solid ${selected ? FILM.accent : FILM.border}`,

@@ -63,7 +63,7 @@ export default function FullscreenNavigation({ isOpen, backgroundColor, currentP
       ref={overlayRef}
       id="fullscreen-navigation"
       aria-hidden={!isOpen}
-      className={`fixed inset-0 z-[80] overflow-x-hidden overflow-y-auto text-white transition-[opacity,transform,visibility] duration-500 ease-[cubic-bezier(.4,0,.2,1)] ${isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-4 opacity-0 pointer-events-none'}`}
+      className={`site-fullscreen-nav fixed inset-0 z-[80] overflow-x-hidden overflow-y-auto text-white transition-[opacity,transform,visibility] duration-500 ease-[cubic-bezier(.4,0,.2,1)] ${isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-4 opacity-0 pointer-events-none'}`}
       style={{ backgroundColor }}
     >
       <div className="pointer-events-none fixed inset-0 opacity-40" style={{ backgroundImage: grain, backgroundSize: '200px 200px' }} />
@@ -81,7 +81,7 @@ export default function FullscreenNavigation({ isOpen, backgroundColor, currentP
                 tabIndex={isOpen ? 0 : -1}
                 aria-current={currentPath === item.path ? 'page' : undefined}
                 onClick={(event) => onNavigate(event, item.path)}
-                className="group grid min-h-[76px] grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-3 py-3 text-white no-underline outline-none sm:min-h-[92px] sm:grid-cols-[52px_minmax(0,1fr)_auto] sm:gap-5 lg:min-h-[104px]"
+                className="group grid min-h-[76px] grid-cols-[30px_minmax(0,1fr)] items-center gap-2 py-3 text-white no-underline outline-none min-[360px]:grid-cols-[38px_minmax(0,1fr)_auto] min-[360px]:gap-3 sm:min-h-[92px] sm:grid-cols-[52px_minmax(0,1fr)_auto] sm:gap-5 lg:min-h-[104px]"
               >
                 <span className="self-start pt-2 text-[11px] font-semibold tracking-[.16em] opacity-70 sm:self-center sm:pt-0 sm:text-xs">{item.number}</span>
                 <span className="flex min-w-0 items-center gap-3 overflow-hidden">
@@ -93,7 +93,7 @@ export default function FullscreenNavigation({ isOpen, backgroundColor, currentP
                   </span>
                   <ArrowUpRight className="h-5 w-5 shrink-0 -translate-x-2 opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 sm:h-7 sm:w-7" strokeWidth={2.1} />
                 </span>
-                <span className="whitespace-nowrap text-xs font-medium tracking-[.08em] opacity-85 sm:text-[15px]">{item.label}</span>
+                <span className="hidden whitespace-nowrap text-xs font-medium tracking-[.08em] opacity-85 min-[360px]:block sm:text-[15px]">{item.label}</span>
               </a>
             </li>
           ))}

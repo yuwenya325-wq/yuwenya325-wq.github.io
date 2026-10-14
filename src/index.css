@@ -12,11 +12,43 @@
 
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; min-height: 100%; margin: 0; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 /* 全站改为单页滚动式结构：纵向滚动交给浏览器，横向不出现滚动条。
    栏目跳转由 JS 的 scrollIntoView({ behavior: 'smooth' }) 完成，
    并在「减少动态效果」偏好下自动切换为瞬时跳转。 */
-body { min-width: 320px; overflow-x: hidden; }
+body { min-width: 280px; overflow-x: hidden; }
 button, a { -webkit-tap-highlight-color: transparent; }
+img, picture, video, canvas { max-width: 100%; }
+
+/* 移动浏览器地址栏会改变可视高度。svh 负责稳定首屏，dvh 在支持时跟随地址栏实时变化。 */
+@supports (min-height: 100svh) {
+  section[id],
+  main,
+  .site-fullscreen-nav { min-height: 100svh; }
+  .figurine-stage { height: 100svh; }
+}
+
+@supports (height: 100dvh) {
+  .figurine-stage { height: 100dvh; }
+}
+
+/* 刘海屏 / 圆角屏安全区。导航面板在矮屏与横屏手机上保持可滚动。 */
+.site-top-nav {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+}
+
+.mobile-nav-panel {
+  max-height: calc(100dvh - 5.5rem - env(safe-area-inset-top, 0px));
+  padding-bottom: max(0.375rem, env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
 
 /* ── 3D 玩偶舞台 ──────────────────────────────────────────────────
    把原来的平面轮播升级为真 3D 透视场景（零依赖，纯 CSS 3D + 浏览器透视投影）：
@@ -399,6 +431,39 @@ button, a { -webkit-tap-highlight-color: transparent; }
   width: 15em;
   height: 15em;
   transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@media (max-width: 899px) {
+  .vd-stage {
+    width: min(15em, 44vw);
+    height: min(15em, 44vw);
+  }
+}
+
+@media (max-width: 359px) {
+  .vd-grid { gap: 0.25rem; }
+  .vd-item { padding-inline: 0.2em; }
+  .vd-stage {
+    width: min(13em, 43vw);
+    height: min(13em, 43vw);
+  }
+  .vd-cn { gap: 0.35em; }
+}
+
+@media (max-width: 319px) {
+  .site-brand-divider,
+  .site-brand-secondary,
+  .site-menu-label { display: none; }
+}
+
+/* 横屏手机：保留主视觉，但压缩非必要留白，避免导航和主体互相遮挡。 */
+@media (max-height: 540px) and (orientation: landscape) {
+  .figurine-backdrop { top: 8%; }
+  .figurine-item[data-role='center'] {
+    height: min(64%, 74vh) !important;
+    bottom: 4% !important;
+  }
+  .mobile-nav-panel { max-height: calc(100dvh - 4.75rem - env(safe-area-inset-top, 0px)); }
 }
 
 .vd-item:hover .vd-stage,

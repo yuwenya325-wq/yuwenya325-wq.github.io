@@ -106,7 +106,7 @@ export default function TopNav({ activeId, onSelect }: TopNavProps) {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-[120] px-3 pt-3 sm:px-5 sm:pt-4">
+    <header className="site-top-nav fixed inset-x-0 top-0 z-[120] px-3 pt-3 sm:px-5 sm:pt-4">
       {/* 阅读进度条 */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] overflow-hidden" aria-hidden="true">
         <div
@@ -127,8 +127,8 @@ export default function TopNav({ activeId, onSelect }: TopNavProps) {
           onMouseLeave={(event) => { event.currentTarget.style.borderColor = BORDER; }}
         >
           <span className="text-[11px] font-bold leading-none tracking-[.12em] text-white lg:text-xs">于文雅</span>
-          <span className="h-3 w-px shrink-0 bg-white/25" aria-hidden="true" />
-          <span className="text-[11px] font-bold leading-none tracking-[.12em] text-white/70 transition-colors duration-300 group-hover:text-white lg:text-xs">
+          <span className="site-brand-divider h-3 w-px shrink-0 bg-white/25" aria-hidden="true" />
+          <span className="site-brand-secondary text-[11px] font-bold leading-none tracking-[.12em] text-white/70 transition-colors duration-300 group-hover:text-white lg:text-xs">
             VISUAL/AIGC
           </span>
         </a>
@@ -200,7 +200,7 @@ export default function TopNav({ activeId, onSelect }: TopNavProps) {
           className="flex items-center gap-2 rounded-2xl px-4 py-3 text-xs font-bold uppercase tracking-[.14em] outline-none transition-[border-color,transform] duration-300 hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:hidden"
           style={{ ...GLASS_STYLE, borderColor: isOpen ? ACCENT : BORDER, color: isOpen ? ACCENT : '#fff' }}
         >
-          <span>{isOpen ? 'CLOSE' : 'MENU'}</span>
+          <span className="site-menu-label">{isOpen ? 'CLOSE' : 'MENU'}</span>
           {isOpen ? <X className="h-4 w-4" strokeWidth={2.4} /> : <Menu className="h-4 w-4" strokeWidth={2.4} />}
         </button>
       </div>
@@ -210,7 +210,7 @@ export default function TopNav({ activeId, onSelect }: TopNavProps) {
         ref={panelRef}
         id="mobile-nav-panel"
         hidden={!isOpen}
-        className="mobile-nav-panel mx-auto mt-2 w-full max-w-[1320px] overflow-hidden rounded-2xl p-1.5 md:hidden"
+        className="mobile-nav-panel mx-auto mt-2 w-full max-w-[1320px] rounded-2xl p-1.5 md:hidden"
         style={GLASS_STYLE}
       >
         {PORTFOLIO_ROUTES.map((item, index) => {
